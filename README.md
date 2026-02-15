@@ -107,16 +107,16 @@ Pushes to `main` will SSH into the VM, pull the repo, and run `claude -p /deploy
 
 ```
 claude-cron/
+  ├── .claude/skills/
+  │   ├── deploy/SKILL.md
+  │   ├── send-email/SKILL.md
+  │   └── list-tasks/SKILL.md
   ├── .github/workflows/deploy.yml.example
   ├── CLAUDE.md
   ├── scripts/
   │   ├── run-task.sh
   │   ├── setup.sh
   │   └── update.sh
-  ├── skills/
-  │   ├── deploy/SKILL.md
-  │   ├── send-email/SKILL.md
-  │   └── list-tasks/SKILL.md
   └── tasks/
       └── your-tasks-here.md
 ```
