@@ -14,7 +14,7 @@ DATA_DIR="$CLAUDE_CRON_DIR/data"
 TASK_FILE="$CLAUDE_CRON_DIR/tasks/${TASK_NAME}.md"
 
 # Parse args
-MAX_TURNS=10; TIMEOUT=3600; MAX_BUDGET=""; MODEL=""
+MAX_TURNS=50; TIMEOUT=3600; MAX_BUDGET=""; MODEL=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --max-turns)  MAX_TURNS="$2";  shift 2 ;;

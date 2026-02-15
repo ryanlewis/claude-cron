@@ -7,7 +7,7 @@ Deploy claude-cron to this VM. Do the following:
 
 1. **Generate crontab**: read every `.md` file in `~/claude-cron/tasks/`. For each task:
    - Extract the **schedule** (cron expression or natural language like "daily at 9am UTC")
-   - Extract **max-turns** (default: 10)
+   - Extract **max-turns** (default: 50)
    - Extract **timeout** in seconds (default: 3600)
    - Extract **max-budget** in USD (optional)
    - Extract **model** (optional — full model ID like `claude-haiku-4-5-20251001`, or shorthand like "haiku" which you expand to the latest model ID)

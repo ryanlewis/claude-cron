@@ -31,7 +31,7 @@ Setup creates data directories and runs `/deploy` (which generates the crontab).
 Create a `.md` file in `tasks/`, describe what you want and when:
 
 ```markdown
-Run every weekday at 9am UTC. Max 10 turns, $1 budget. Use haiku.
+Run every weekday at 9am UTC. Max 50 turns, $1 budget. Use haiku.
 
 Check https://github.com/you/project for open PRs older than 7 days.
 Post a reminder comment on each one. Email me a summary.
@@ -51,7 +51,7 @@ A task is a single markdown file — a natural language prompt that includes its
 ```markdown
 ---
 schedule: "*/30 9-17 * * 1-5"
-max-turns: 10
+max-turns: 50
 timeout: 600
 model: claude-haiku-4-5-20251001
 ---
@@ -87,21 +87,61 @@ Or edit `~/.claude.json` directly. Local-scoped servers have no confirmation pro
 
 ## CI Deploy (Optional)
 
-To auto-deploy on push to main, copy the example workflow into place:
+You can set up GitHub Actions to auto-deploy on every push to main. This means adding a task is just: commit a `.md` file, push, done.
+
+### 1. Generate a deploy SSH key
+
+On your local machine, create a dedicated key for CI:
+
+```bash
+ssh-keygen -t ed25519 -C "claude-cron-ci" -f ~/.ssh/claude-cron-ci -N ""
+```
+
+### 2. Add the public key to your exe.dev account
+
+```bash
+cat ~/.ssh/claude-cron-ci.pub | ssh exe.dev ssh-key add
+```
+
+This authorises the key to SSH into any of your exe.dev VMs.
+
+### 3. Enable the workflow
+
+Copy the example workflow into place and commit it:
 
 ```bash
 cp .github/workflows/deploy.yml.example .github/workflows/deploy.yml
+git add .github/workflows/deploy.yml
+git commit -m "Enable CI deploy"
 ```
 
-Then add these to your GitHub repo settings (Settings > Secrets and variables > Actions):
+### 4. Add secrets and variables to your GitHub repo
+
+Go to your repo's Settings > Secrets and variables > Actions, or use the `gh` CLI:
+
+```bash
+gh variable set EXE_DEV_HOST --body "vmname.exe.xyz"
+gh variable set EXE_DEV_USER --body "exedev"
+gh secret set EXE_DEV_SSH_KEY < ~/.ssh/claude-cron-ci
+```
 
 | Type | Name | Value |
 |------|------|-------|
-| Variable | `EXE_DEV_HOST` | `vmname.exe.xyz` |
-| Variable | `EXE_DEV_USER` | `user` (or your VM username) |
-| Secret | `EXE_DEV_SSH_KEY` | Your SSH private key |
+| Variable | `EXE_DEV_HOST` | Your VM hostname (e.g. `myvm.exe.xyz`) |
+| Variable | `EXE_DEV_USER` | VM username (default: `exedev`) |
+| Secret | `EXE_DEV_SSH_KEY` | Contents of the private key file |
 
-Pushes to `main` will SSH into the VM, pull the repo, and run `claude -p /deploy`.
+### 5. Push and verify
+
+```bash
+git push
+```
+
+The workflow will SSH into the VM, pull the repo, and run `claude -p /deploy`. Check the run status with:
+
+```bash
+gh run list
+```
 
 ## Repo Structure
 

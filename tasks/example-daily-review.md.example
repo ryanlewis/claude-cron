@@ -1,4 +1,4 @@
-Run every weekday at 9am UTC. Max 15 turns, $2 budget, 30 minute timeout.
+Run every weekday at 9am UTC. Max 50 turns, $2 budget, 30 minute timeout.
 
 Check https://github.com/you/project for open PRs older than 7 days.
 Post a reminder comment on each one.
