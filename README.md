@@ -118,7 +118,13 @@ Check it worked: `gh run list`
 - Logs go to `data/logs/<task>/`, rotated to the last 50 runs
 - Failed tasks send an email via exe.dev's built-in gateway
 
-## Skills
+## Extending
+
+You can give your tasks extra capabilities with skills, MCP servers, and plugins. These let Claude interact with external services, follow custom workflows, or use specialised tools.
+
+### Skills
+
+Skills are prompt files that teach Claude reusable workflows. claude-cron ships with three built-in skills:
 
 | Skill | What it does |
 |-------|-------------|
@@ -126,13 +132,24 @@ Check it worked: `gh run list`
 | `/send-email` | Sends an email via exe.dev's gateway |
 | `/list-tasks` | Shows all tasks with schedules and recent run status |
 
-## MCP Servers
+Add your own by creating a `SKILL.md` in `.claude/skills/your-skill/`:
+
+```markdown
+---
+name: your-skill
+description: "What this skill does"
+---
+
+Instructions for Claude to follow when this skill is invoked.
+```
+
+### MCP Servers
 
 MCP servers give your tasks access to external services like GitHub, Slack, etc.
 
 Run these commands **on the VM, from `~/claude-cron`**. Secrets are stored in `~/.claude.json` on the VM — never in the repo.
 
-### Example: GitHub (remote)
+**GitHub (remote):**
 
 ```bash
 cd ~/claude-cron
@@ -142,7 +159,7 @@ claude mcp add --transport http github https://api.githubcopilot.com/mcp/ \
 
 Create a [Personal Access Token](https://github.com/settings/tokens) with the scopes your tasks need.
 
-### Example: any HTTP MCP server
+**Any HTTP MCP server:**
 
 ```bash
 cd ~/claude-cron
@@ -150,13 +167,22 @@ claude mcp add --transport http NAME URL \
   --header "Authorization: Bearer YOUR_TOKEN"
 ```
 
-### Verify
-
-```bash
-claude mcp list
-```
+**Verify:** `claude mcp list`
 
 Then just mention the service in your task prompt — Claude will use the MCP server automatically.
+
+### Plugins
+
+Any Claude Code plugins you've installed are available to your tasks automatically.
+
+For example, the official [code-review](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-review) plugin gives your tasks access to `/code-review`. A task could use it like:
+
+```markdown
+Run every hour during working hours. Max 50 turns.
+
+Check https://github.com/you/project for open PRs that haven't been reviewed.
+Run /code-review on each one.
+```
 
 ## Repo Structure
 
