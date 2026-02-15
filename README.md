@@ -1,34 +1,41 @@
 # claude-cron
 
-Run Claude Code on a schedule. Clone the repo, run setup on an [exe.dev](https://exe.dev) VM, start writing tasks as natural language markdown files. Push to deploy.
+Run Claude Code on a schedule. Write tasks as markdown files. Push to deploy.
 
-## Getting Started
+Designed for quick setup on [exe.dev](https://exe.dev) VMs ($20/mo).
+
+## Setup
 
 ### 1. Create your repo
 
-Use this as a template or fork it. This is your task repo — you'll commit task files and skills here.
+Click **"Use this template"** on GitHub to create your own copy.
 
-### 2. Run setup on the box
-
-SSH into your exe.dev VM, authenticate your tools, clone your repo, and run setup:
+### 2. Create a VM
 
 ```bash
-ssh vmname.exe.xyz
+ssh exe.dev new --name=my-cron
+```
 
-# Auth — do this yourself before setup
-# Set ANTHROPIC_API_KEY in ~/.claude/settings.local.json (under the "env" key)
-gh auth login   # if tasks use GitHub
+### 3. Set up the VM
 
-# Clone and setup
-git clone https://github.com/you/claude-cron ~/claude-cron
+SSH in, auth Claude, clone your repo, and run setup:
+
+```bash
+ssh my-cron.exe.xyz
+
+# Log into Claude (interactive prompt — do this once)
+claude
+
+# Clone your repo and run setup
+git clone https://github.com/YOUR-USERNAME/claude-cron ~/claude-cron
 ~/claude-cron/scripts/setup.sh
 ```
 
-Setup creates data directories and runs `/deploy` (which generates the crontab).
+Done. Your crontab is now managed by Claude.
 
-### 3. Start writing tasks
+## Adding a Task
 
-Create a `.md` file in `tasks/`, describe what you want and when:
+Create a `.md` file in `tasks/`. Write what you want and when:
 
 ```markdown
 Run every weekday at 9am UTC. Max 50 turns, $1 budget. Use haiku.
@@ -37,16 +44,17 @@ Check https://github.com/you/project for open PRs older than 7 days.
 Post a reminder comment on each one. Email me a summary.
 ```
 
-Then deploy — either manually on the VM or via CI (see below):
+Then redeploy on the VM:
 
 ```bash
-# On the VM
 ~/claude-cron/scripts/update.sh
 ```
 
-## Task Format
+One file per task. Delete the file to remove the task. You can also set up [CI](#ci-deploy-optional) to deploy automatically on `git push`.
 
-A task is a single markdown file — a natural language prompt that includes its own scheduling and execution config as prose. No YAML required (but optional frontmatter is supported too):
+### Frontmatter (optional)
+
+If you prefer explicit config over prose:
 
 ```markdown
 ---
@@ -60,54 +68,23 @@ Check CI status for the main branch. If any checks are failing,
 open an issue with the failure details.
 ```
 
-## How It Works
-
-- **Claude-as-deployer**: the deploy step is itself a Claude invocation that reads task files and generates the crontab
-- **Thin wrapper**: `run-task.sh` handles logging, timeout, and failure emails — no config parsing
-- **Manual deploy**: SSH in and run `scripts/update.sh` (pulls latest + runs `/deploy`)
-- **Optional CI**: set up GitHub Actions to deploy on push (see below)
-
-## Skills
-
-| Skill | Description |
-|-------|-------------|
-| `/deploy` | Read task files, generate and install the crontab |
-| `/send-email` | Send an email via exe.dev's gateway |
-| `/list-tasks` | Show all tasks with schedules and recent run status |
-
-## MCP Servers
-
-Configure MCP servers at local scope on the VM:
-
-```bash
-claude mcp add discord https://mcp.discord.com/...
-```
-
-Or edit `~/.claude.json` directly. Local-scoped servers have no confirmation prompts, which is required for headless automation.
-
 ## CI Deploy (Optional)
 
-You can set up GitHub Actions to auto-deploy on every push to main. This means adding a task is just: commit a `.md` file, push, done.
+Auto-deploy on every push to main. Commit a task, push, done.
 
-### 1. Generate a deploy SSH key
-
-On your local machine, create a dedicated key for CI:
+### 1. Generate a deploy key
 
 ```bash
 ssh-keygen -t ed25519 -C "claude-cron-ci" -f ~/.ssh/claude-cron-ci -N ""
 ```
 
-### 2. Add the public key to your exe.dev account
+### 2. Add it to exe.dev
 
 ```bash
 cat ~/.ssh/claude-cron-ci.pub | ssh exe.dev ssh-key add
 ```
 
-This authorises the key to SSH into any of your exe.dev VMs.
-
 ### 3. Enable the workflow
-
-Copy the example workflow into place and commit it:
 
 ```bash
 cp .github/workflows/deploy.yml.example .github/workflows/deploy.yml
@@ -115,48 +92,87 @@ git add .github/workflows/deploy.yml
 git commit -m "Enable CI deploy"
 ```
 
-### 4. Add secrets and variables to your GitHub repo
-
-Go to your repo's Settings > Secrets and variables > Actions, or use the `gh` CLI:
+### 4. Set GitHub secrets
 
 ```bash
-gh variable set EXE_DEV_HOST --body "vmname.exe.xyz"
+gh variable set EXE_DEV_HOST --body "VMNAME.exe.xyz"
 gh variable set EXE_DEV_USER --body "exedev"
 gh secret set EXE_DEV_SSH_KEY < ~/.ssh/claude-cron-ci
 ```
 
-| Type | Name | Value |
-|------|------|-------|
-| Variable | `EXE_DEV_HOST` | Your VM hostname (e.g. `myvm.exe.xyz`) |
-| Variable | `EXE_DEV_USER` | VM username (default: `exedev`) |
-| Secret | `EXE_DEV_SSH_KEY` | Contents of the private key file |
+Replace `VMNAME` with your VM name from step 2.
 
-### 5. Push and verify
+### 5. Push
 
 ```bash
 git push
 ```
 
-The workflow will SSH into the VM, pull the repo, and run `claude -p /deploy`. Check the run status with:
+Check it worked: `gh run list`
+
+## How It Works
+
+- Tasks live in `tasks/*.md` — one file per task
+- On deploy, Claude reads every task file, extracts the schedule and limits, and generates the crontab
+- At runtime, `run-task.sh` pipes the task file to Claude with the right CLI flags
+- Logs go to `data/logs/<task>/`, rotated to the last 50 runs
+- Failed tasks send an email via exe.dev's built-in gateway
+
+## Skills
+
+| Skill | What it does |
+|-------|-------------|
+| `/deploy` | Reads task files, generates and installs the crontab |
+| `/send-email` | Sends an email via exe.dev's gateway |
+| `/list-tasks` | Shows all tasks with schedules and recent run status |
+
+## MCP Servers
+
+MCP servers give your tasks access to external services like GitHub, Slack, etc.
+
+Run these commands **on the VM, from `~/claude-cron`**. Secrets are stored in `~/.claude.json` on the VM — never in the repo.
+
+### Example: GitHub (remote)
 
 ```bash
-gh run list
+cd ~/claude-cron
+claude mcp add --transport http github https://api.githubcopilot.com/mcp/ \
+  --header "Authorization: Bearer YOUR_GITHUB_PAT"
 ```
+
+Create a [Personal Access Token](https://github.com/settings/tokens) with the scopes your tasks need.
+
+### Example: any HTTP MCP server
+
+```bash
+cd ~/claude-cron
+claude mcp add --transport http NAME URL \
+  --header "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Verify
+
+```bash
+claude mcp list
+```
+
+Then just mention the service in your task prompt — Claude will use the MCP server automatically.
 
 ## Repo Structure
 
 ```
 claude-cron/
-  ├── .claude/skills/
-  │   ├── deploy/SKILL.md
-  │   ├── send-email/SKILL.md
-  │   └── list-tasks/SKILL.md
-  ├── .github/workflows/deploy.yml.example
-  ├── CLAUDE.md
-  ├── scripts/
-  │   ├── run-task.sh
-  │   ├── setup.sh
-  │   └── update.sh
-  └── tasks/
-      └── your-tasks-here.md
+  .claude/skills/
+    deploy/SKILL.md
+    send-email/SKILL.md
+    list-tasks/SKILL.md
+  .github/workflows/
+    deploy.yml.example
+  scripts/
+    run-task.sh
+    setup.sh
+    update.sh
+  tasks/
+    your-tasks-here.md
+  CLAUDE.md
 ```
