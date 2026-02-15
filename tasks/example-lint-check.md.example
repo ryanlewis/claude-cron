@@ -1,0 +1,9 @@
+---
+schedule: "*/30 9-17 * * 1-5"
+max-turns: 5
+timeout: 600
+model: claude-haiku-4-5-20251001
+---
+
+Check CI status for the main branch of https://github.com/you/project.
+If any checks are failing, open an issue with the failure details.
