@@ -51,7 +51,7 @@ A task is a single markdown file — a natural language prompt that includes its
 ```markdown
 ---
 schedule: "*/30 9-17 * * 1-5"
-max-turns: 5
+max-turns: 10
 timeout: 600
 model: claude-haiku-4-5-20251001
 ---
