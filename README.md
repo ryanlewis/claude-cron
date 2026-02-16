@@ -2,7 +2,7 @@
 
 Run Claude Code on a schedule. Write tasks as markdown files. Push to deploy.
 
-Designed for quick setup on [exe.dev](https://exe.dev) VMs ($20/mo).
+Designed for quick setup on [exe.dev](https://exe.dev) VMs ($20/mo). Works on any Linux machine — see [Running on Your Own Machine](#running-on-your-own-machine).
 
 ## Setup
 
@@ -117,6 +117,28 @@ Check it worked: `gh run list`
 - At runtime, `run-task.sh` pipes the task file to Claude with the right CLI flags
 - Logs go to `data/logs/<task>/`, rotated to the last 50 runs
 - Failed tasks send an email via exe.dev's built-in gateway
+
+## Running on Your Own Machine
+
+The core system is just cron + the Claude CLI — it works anywhere Linux runs. A few pieces are wired to exe.dev's infrastructure and need adapting if you're running elsewhere:
+
+- **Failure alert email** (`scripts/run-task.sh`) — On failure, the task runner sends an alert via exe.dev's metadata gateway (`curl 169.254.169.254/gateway/email/send`). Replace the curl block with `sendmail`, an SMTP call, or remove it if you don't need failure alerts.
+- **`/send-email` skill** (`.claude/skills/send-email/`) — Tasks that send email use this skill, which wraps the same gateway. Rewrite it for your mail setup or delete it if your tasks don't send email.
+- **Email config in `CLAUDE.md`** — The `Email` section documents the gateway endpoint and inbound mail (`~/Maildir`). Update or remove it to match your environment.
+- **CI workflow** (`.github/workflows/deploy.yml`) — Uses `EXE_DEV_*` secrets to SSH into the VM and redeploy. Rename the variables and update the SSH target to point at your machine.
+
+Everything else — task files, the `/deploy` skill, `run-task.sh`, log rotation, `setup.sh` — is portable as-is.
+
+## Usage & Terms
+
+This project uses the official Claude Code CLI in headless mode (`-p`), a documented and supported feature. It's just cron + the real CLI.
+
+A few things to be aware of:
+
+- **Pro/Max subscriptions:** Scheduled tasks count against the same rolling usage window as interactive Claude Code and claude.ai. Use the safeguards available — `timeout`, model choice, scheduling frequency — to limit execution.
+- **API keys:** Usage is billed per-token at standard API rates. No rolling windows — the better option for high-volume or mission-critical automation.
+- **Reliability:** Tasks depend on external sites and LLM output. They may fail or produce incorrect results — don't rely on this for anything critical.
+- **Terms:** Anthropic's [Consumer Terms of Service](https://www.anthropic.com/legal/consumer-terms) govern subscription usage. This project is a scheduling wrapper — you're responsible for ensuring your usage complies with their terms.
 
 ## Extending
 
