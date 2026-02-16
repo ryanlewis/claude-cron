@@ -125,7 +125,7 @@ The core system is just cron + the Claude CLI — it works anywhere Linux runs. 
 - **Failure alert email** (`scripts/run-task.sh`) — On failure, the task runner sends an alert via exe.dev's metadata gateway (`curl 169.254.169.254/gateway/email/send`). Replace the curl block with `sendmail`, an SMTP call, or remove it if you don't need failure alerts.
 - **`/send-email` skill** (`.claude/skills/send-email/`) — Tasks that send email use this skill, which wraps the same gateway. Rewrite it for your mail setup or delete it if your tasks don't send email.
 - **Email config in `CLAUDE.md`** — The `Email` section documents the gateway endpoint and inbound mail (`~/Maildir`). Update or remove it to match your environment.
-- **CI workflow** (`.github/workflows/deploy.yml`) — Uses `EXE_DEV_*` secrets to SSH into the VM and redeploy. Rename the variables and update the SSH target to point at your machine.
+- **CI workflow** (`.github/workflows/deploy.yml.example`) — Uses `EXE_DEV_*` secrets to SSH into the VM and redeploy. Rename the variables and update the SSH target to point at your machine.
 
 Everything else — task files, the `/deploy` skill, `run-task.sh`, log rotation, `setup.sh` — is portable as-is.
 
