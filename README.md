@@ -4,6 +4,15 @@ Run Claude Code on a schedule. Write tasks as markdown files. Push to deploy.
 
 Designed for quick setup on [exe.dev](https://exe.dev) VMs ($20/mo). Works on any Linux machine — see [Running on Your Own Machine](#running-on-your-own-machine).
 
+## Why
+
+I gave [OpenClaw](https://github.com/openclaw/openclaw) a go — it's a seriously
+impressive project — but it does a lot more than I needed or wanted. I mostly
+just wanted to summarise things every morning and get it in my inbox (I actually
+get a bunch of summaries sent to a series of Discord channels). I already use
+Claude Code for everything else, so a cron job and a prompt file in a repo felt
+a little more appropriate.
+
 ## Setup
 
 ### 1. Create your repo
