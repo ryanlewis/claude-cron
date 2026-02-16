@@ -19,7 +19,7 @@ a little more appropriate.
 
 Click **"Use this template"** on GitHub to create your own copy.
 
-### 2. Create a VM
+### 2. Create a VM (exe.dev)
 
 ```bash
 ssh exe.dev new --name=my-cron
@@ -27,12 +27,11 @@ ssh exe.dev new --name=my-cron
 
 ### 3. Set up the VM
 
-SSH in, auth Claude, clone your repo, and run setup:
-
 ```bash
+# SSH into your VM
 ssh my-cron.exe.xyz
 
-# Log into Claude (interactive prompt — do this once)
+# Install and log into Claude (interactive prompt — do this once)
 claude
 
 # Clone your repo and run setup
