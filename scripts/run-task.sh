@@ -41,13 +41,15 @@ cd "$CLAUDE_CRON_DIR"
 
 # Build claude args
 ARGS=(--print --max-turns "$MAX_TURNS" --dangerously-skip-permissions)
+ARGS+=(--append-system-prompt "You are running as an unattended cron job. Execute the task immediately. Do not summarise the task, do not ask questions, do not wait for input.")
 [[ -n "$MAX_BUDGET" ]] && ARGS+=(--max-budget-usd "$MAX_BUDGET")
 [[ -n "$MODEL" ]] && ARGS+=(--model "$MODEL")
 
-# Run
+# Run — pass task file contents as the prompt argument
+PROMPT="$(cat "$TASK_FILE")"
 EXIT_CODE=0
 timeout --signal=KILL "$TIMEOUT" \
-    claude "${ARGS[@]}" < "$TASK_FILE" >> "$LOG_FILE" 2>&1 || EXIT_CODE=$?
+    claude "${ARGS[@]}" "$PROMPT" >> "$LOG_FILE" 2>&1 || EXIT_CODE=$?
 
 { echo ""; echo "== exit $EXIT_CODE | $(date -Iseconds) =="; } >> "$LOG_FILE"
 
