@@ -32,6 +32,10 @@ mkdir -p "$LOG_DIR"
 
 { echo "== $TASK_NAME | $(date -Iseconds) =="; echo ""; } >> "$LOG_FILE"
 
+# Signal to Claude that this is an unattended cron execution
+export CLAUDE_CRON=1
+export CLAUDE_CRON_TASK="$TASK_NAME"
+
 # Run from repo root so Claude finds CLAUDE.md
 cd "$CLAUDE_CRON_DIR"
 
