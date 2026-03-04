@@ -45,11 +45,10 @@ ARGS+=(--append-system-prompt "You are running as an unattended cron job. Execut
 [[ -n "$MAX_BUDGET" ]] && ARGS+=(--max-budget-usd "$MAX_BUDGET")
 [[ -n "$MODEL" ]] && ARGS+=(--model "$MODEL")
 
-# Run — pass task file contents as the prompt argument
-PROMPT="$(cat "$TASK_FILE")"
+# Run — pipe task file via stdin, with a short prompt arg to trigger execution
 EXIT_CODE=0
 timeout --signal=KILL "$TIMEOUT" \
-    claude "${ARGS[@]}" "$PROMPT" >> "$LOG_FILE" 2>&1 || EXIT_CODE=$?
+    claude "${ARGS[@]}" -p "Execute the following task." < "$TASK_FILE" >> "$LOG_FILE" 2>&1 || EXIT_CODE=$?
 
 { echo ""; echo "== exit $EXIT_CODE | $(date -Iseconds) =="; } >> "$LOG_FILE"
 
